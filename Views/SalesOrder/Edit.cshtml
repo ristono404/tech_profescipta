@@ -1,0 +1,602 @@
+﻿    @{
+        var customers = ViewBag.Customers as List<Customer>;
+        var order = ViewBag.Order as SalesOrderViewModel; 
+    }
+
+ <nav class="navbar navbar-dark" style="background-color: rgb(24 56 96);">
+  <div class="container-fluid">
+    <div class="mx-auto">
+      <span class="navbar-brand mb-0 h1">Sales Order Information <i class="fa-solid fa-angles-down"></i> </span>
+    </div>
+  </div>
+</nav>
+
+<br/>
+
+<div class="container">
+     <div class="form-group row justify-content-center mb-3">
+            <!-- Keywords Input -->
+            <label for="keywords" class="col-md-2 col-form-label custom-label text-md-right">
+                Sales Order Number
+                <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-3">
+                <input type="text" class="form-control custom-input" value="@order.order_no" id="order_no" placeholder="Input Here">
+            </div>
+
+            <!-- Order Date Input -->
+            <label for="orderDate" class="col-md-2 col-form-label custom-label text-md-right">
+                Customer
+                <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-3">
+                <div class="input-group">
+                    @* <select id="com_customer_id" class="form-control">
+                        <option value="">-- Select Customer --</option>  <!-- Placeholder option -->
+                        
+                        @foreach (var customer in customers)
+                        {
+                           <option @(customer.com_customer_id == order.com_customer_id ? "selected" : "") value="@customer.com_customer_id" >
+                                @customer.customer_name
+                            </option>
+                            The tag helper 'option' must not have C# in the element's attribute declaration area.Razor(RZ1031)
+                        }
+                    </select> *@
+
+    @Html.DropDownList("SelectedCustomerId", ViewBag.Customers as SelectList, "-- Select Customer --", new { @class = "form-control", id = "com_customer_id" })
+
+    @Html.ValidationMessage("SelectedCustomerId", "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+
+         <div class="form-group row justify-content-center mb-3">
+
+
+            <!-- Order Date Input -->
+            <label for="orderDate" class="col-md-2 col-form-label custom-label text-md-right">
+                Order Date
+                <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <input class="form-control custom-input" id="order_date" value="@order.order_date" placeholder="Pick Date">
+                </div>
+            </div>
+
+            <!-- Keywords Input -->
+            <label for="keywords" class="col-md-2 col-form-label custom-label text-md-right">
+                Address
+                <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-3">
+                <textarea class="form-control custom-input" id="address">@order.address</textarea>
+            </div>
+
+        </div>
+
+    <br />
+
+</div>
+
+ <nav class="navbar navbar-dark" style="background-color: rgb(24 56 96);">
+  <div class="container-fluid">
+    <div class="mx-auto">
+      <span class="navbar-brand mb-0 h1">Detail item  Information <i class="fa-solid fa-angles-down"></i> </span>
+    </div>
+  </div>
+</nav>
+
+
+<div class="container">
+
+    <br />
+
+<div class="d-flex justify-content-between">
+    <button class="btn btn-danger" id="btn-add-item">Add Item</button>        
+</div>
+
+    <br/>
+    <div style="margin:0 auto;">
+        <table id="example" class="table table-striped table-bordered dt-responsive nowrap" width="100%" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>NO</th>
+                    <th>ACTION</th>
+                    <th>ITEM NAME</th>
+                    <th>QTY</th>
+                    <th>PRICE</th>
+                    <th>TOTAL</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                  <th colspan="4" style="text-align: right;">Total Item: <span class="total-items">0</span></th>
+                  <th>Total Amount: <span class="total-amount">0</span></th>
+                  <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+
+<br/>
+  <div class="d-flex 1  justify-content-center bottom-buttons" >
+    <button type="button" class="btn btn-danger me-2" id="save">Save</button>
+    @Html.ActionLink("Close", "Index", "SalesOrder", null, new { @class = "btn btn-primary" })
+
+  </div>
+
+
+</div>
+
+<script>
+var table
+var lastRowNum
+$(document).ready(function() {
+
+
+$('.price').priceFormat();
+
+      $('#order_date').datepicker({
+            format: 'dd/mm/yyyy', 
+            autoclose: true,      
+            todayHighlight: true  
+        });
+     var json
+   var jsonData = [];
+var url = '@Url.Content("~/")' + `SalesOrder/LoadItemData`;
+        $.get(url, { orderNo: '@order.order_no' }, function(data) {
+            if (data) {
+                jsonData = data
+                   table = $("#example").DataTable({
+                                "scrollY": "200px",  
+                                "dom": "<'row'<'col-sm-12'tr>>" +  
+                                    "<'row'<'col-sm-7'p><'col-sm-5'i>>", 
+                                "language": {
+                                    "info": "_START_ - _END_ of _TOTAL_ items",
+                                    "emptyTable": "No items have been added yet",
+                                    "paginate": {
+                                        "first": '<i class="fa fa-angle-double-left"></i>',
+                                        "previous": '<i class="fa fa-angle-left"></i>',
+                                        "next": '<i class="fa fa-angle-right"></i>',
+                                        "last": '<i class="fa fa-angle-double-right"></i>'
+                                    }
+                                },
+                                "pagingType": "full_numbers",
+                                "searching": true,  
+                                "lengthChange": false,
+                                "pageLength": 4,
+                                "ordering": false,
+                                "processing": true,
+                                "data": jsonData,  
+                                "columns": [
+                                    { 
+                                        "data": null,
+                                        "render": function(data, type, row, meta) {
+                                            if (data.quantity !== ""){
+                                                lastRowNum = meta.row + 1
+                                                return meta.row + 1;
+                                            }else{
+                                                return ""
+                                            }
+                                        
+                                        },
+                                        "orderable": false,
+                                        "searchable": false
+                                    },
+                                    {
+                                        "render": function(data, type, full, meta) {
+                                            if (full.quantity !== "" && full.isActive){
+                                            return  `<button class='btn btn-default btn-sm save' rownum=${meta.row + 1}><i class='fa-regular fa-floppy-disk'></i></button>
+                                                     <button class='btn btn-default btn-sm cancel' rownum=${meta.row + 1}><i class="fa-solid fa-xmark"></i></button>
+                                            `;          
+                                            }
+                                            if(full.quantity !== "" && !full.isActive){
+                                            return `<button class='btn btn-default btn-sm edit' rownum=${meta.row + 1}><i class="fa-regular fa-pen-to-square"></i></button>
+                                        <button class='btn btn-default btn-sm delete' rownum=${meta.row + 1}><i class="fa-solid fa-trash-can"></i></button>
+                                        `
+                                            }
+                                            return ""
+                                        
+                                        }
+                                    },
+                                    { "data": "item_name", "name": "item_name", "autoWidth": true },
+                                    { "data": "quantity", "name": "quantity", "autoWidth": true },
+                                    {
+                                        "data": "price",
+                                        "name": "price",
+                                        "autoWidth": true,
+                                        "render": function(data, type, row) {
+                                            return formatNumber(row.price);
+                                         }
+                                        },
+                                    {
+                                        "data": "total",
+                                        "name": "total",
+                                        "autoWidth": true,
+                                        "render": function(data, type, row) {
+                                            return formatNumber(row.total); 
+                                        }
+                                    }
+                                ],
+
+                            });
+
+                            calculateTotals();
+
+            } else {
+                alert("Something Went Wrong!");
+            }
+        });
+
+ 
+    $('#btn-add-item').click(function(e) {
+    e.preventDefault(); 
+
+     for (let index = 0; index < jsonData.length; index++) {
+        var quantityValue = parseFloat(jsonData[index].quantity);
+        var priceValue = parseFloat(jsonData[index].price);
+
+        quantityValue = isNaN(quantityValue) ? 0 : quantityValue;
+        priceValue = isNaN(priceValue) ? 0 : priceValue;
+
+       if ( jsonData[index].isActive &&  jsonData[index].item_name.trim() === "" && quantityValue < 1 && priceValue < 1 ){
+             return
+          }
+          jsonData[index].isActive = false
+     }
+
+    jsonData.push({
+            "item_name": "", 
+            "quantity": 0,         
+            "price": "",       
+            "total": "",       
+            "isActive" : true
+        });
+
+  
+    table.clear().rows.add(jsonData).draw();
+    table.page('last').draw('page');
+
+  
+    var row = table.row(lastRowNum-1).node();  
+
+    var itemCell = $(row).find('td:eq(2)');  
+    var quantityCell = $(row).find('td:eq(3)');
+    var priceCell = $(row).find('td:eq(4)');
+
+    itemCell.html('<input type="text" class="form-control item" />');
+    quantityCell.html('<input type="number" class="form-control quantity" value="0" />'); 
+    priceCell.html('<input class="form-control price" />');
+    itemCell.find('input').focus();
+    initPriceFormat();
+});
+
+$(document).on('blur', '.quantity, .price', function(e) {
+   
+    e.preventDefault();
+    var row = $(this).closest('tr');
+
+    var quantity = parseFloat(row.find('input.quantity').val());
+    var price = parseFloat(row.find('input.price').val().replace(/\./g, ''));
+
+    quantity = isNaN(quantity) ? 0 : quantity;
+    price = isNaN(price) ? 0 : price;
+
+    var total = quantity * price;
+
+    row.find('td:last').text(formatNumber(total));
+});
+
+$(document).on('click', '.save', function(e) {
+    e.preventDefault();
+   debugger
+    var rownum = $(this).attr('rownum');
+    var row = table.row(rownum - 1).node(); 
+
+    var itemValue = $(row).find('input.item').val();
+    var quantityValue = parseFloat($(row).find('input.quantity').val());
+    var priceValue = parseFloat($(row).find('input.price').val().replace(/\./g, ''));
+
+    quantityValue = isNaN(quantityValue) ? 0 : quantityValue;
+    priceValue = isNaN(priceValue) ? 0 : priceValue;
+
+     if (itemValue.trim() === "" && quantityValue < 1 && priceValue < 1) {
+        alert("Item harus diisi, dan quantity serta price harus minimal 1!");
+        $(row).find('input.item').focus()
+        return; 
+    }
+
+     if (itemValue.trim() === "") {
+        alert("Item harus diisi!");
+        $(row).find('input.item').focus()
+        return;  
+    }
+
+    if (quantityValue < 1) {
+        alert("quantity harus minimal 1!");
+        $(row).find('input.quantity').focus()
+        return;  
+    }
+
+    if (priceValue < 1) {
+        alert("price harus minimal 1!");
+        $(row).find('input.price').focus()
+        return;  
+    }
+
+    var totalValue = quantityValue * priceValue;
+
+    jsonData[rownum - 1].item_name = itemValue;
+    jsonData[rownum - 1].quantity = quantityValue;
+    jsonData[rownum - 1].price = priceValue;
+    jsonData[rownum - 1].total = totalValue;
+    jsonData[rownum - 1].isActive = false;
+
+        jsonData.push({
+            "item_name": "", 
+            "quantity": "",          
+            "price": "",      
+            "total": "",    
+            "isActive" : false
+        })
+      jsonData[jsonData.length - 1].quantity = 0;
+      jsonData[jsonData.length - 1].isActive = true;
+    
+    table.clear().rows.add(jsonData).draw();
+    table.page('last').draw('page');
+
+    var row = table.row(lastRowNum-1).node();
+    var itemCell = $(row).find('td:eq(2)'); 
+    var quantityCell = $(row).find('td:eq(3)');
+    var priceCell = $(row).find('td:eq(4)');
+
+    itemCell.html('<input type="text" class="form-control item" />');
+    quantityCell.html('<input type="number" class="form-control quantity" value="0" />'); 
+    priceCell.html('<input type="text" class="form-control price"/>');
+
+    itemCell.find('input').focus();
+    initPriceFormat()
+    calculateTotals();
+   
+});
+
+$(document).on('click', '.edit', function(e) {
+    e.preventDefault();  
+
+    var rownum = $(this).closest('tr').find('td:eq(1)').attr('data-rownum'); 
+    
+    if (!rownum) {
+        var row = table.row($(this).closest('tr'));
+        rownum = row.index(); 
+    }
+
+    for (let index = 0; index < jsonData.length; index++) {
+        var quantityValue = parseFloat(jsonData[index].quantity);
+        var priceValue = parseFloat(jsonData[index].price);
+
+        quantityValue = isNaN(quantityValue) ? 0 : quantityValue;
+        priceValue = isNaN(priceValue) ? 0 : priceValue;
+
+       if ( jsonData[index].isActive &&  jsonData[index].item_name.trim() === "" && quantityValue < 1 && priceValue < 1 ){
+            jsonData.splice(index, 1); 
+        }else if ( jsonData[index].isActive){
+                jsonData[index].isActive = false;
+
+                var row = table.row(index).node();
+                var itemCell = $(row).find('td:eq(2)');
+                var quantityCell = $(row).find('td:eq(3)');
+                var priceCell = $(row).find('td:eq(4)');
+                
+                itemCell.html(jsonData[index].item_name);
+                quantityCell.html(jsonData[index].quantity);
+                priceCell.html(jsonData[index].price);
+            }
+    }
+
+    jsonData[rownum].isActive = true;
+
+    var pageInfo = table.page.info();
+    table.clear().rows.add(jsonData).draw();
+    table.page(pageInfo.page).draw('page');
+
+    var row = table.row(rownum).node();
+    var itemCell = $(row).find('td:eq(2)'); 
+    var quantityCell = $(row).find('td:eq(3)');
+    var priceCell = $(row).find('td:eq(4)');
+    itemCell.html('<input type="text" class="form-control item" value="'+itemCell.text()+'" />');
+    quantityCell.html('<input type="number" class="form-control quantity" value="'+quantityCell.text()+'"  />'); 
+    priceCell.html('<input type="text" class="form-control price" value="'+priceCell.text()+'"  />');
+    itemCell.find('input').focus();
+    initPriceFormat()
+});
+
+$(document).on('click', '.cancel', function(e) {
+    e.preventDefault(); 
+    debugger;
+
+    var rownum = $(this).closest('tr').find('td:eq(1)').attr('data-rownum'); 
+    
+    if (!rownum) {
+        var row = table.row($(this).closest('tr'));  
+        rownum = row.index(); 
+    }
+    rownumDeleted = 0
+    for (let index = 0; index < jsonData.length; index++) {
+        var quantityValue = parseFloat(jsonData[index].quantity);
+        var priceValue = parseFloat(jsonData[index].price);
+
+        quantityValue = isNaN(quantityValue) ? 0 : quantityValue;
+        priceValue = isNaN(priceValue) ? 0 : priceValue;
+
+       if ( jsonData[index].isActive &&  jsonData[index].item_name.trim() === "" && quantityValue < 1 && priceValue < 1 ){
+            jsonData.splice(index, 1); 
+            rownumDeleted = index
+        }
+    }
+    var pageInfo = table.page.info();
+    if (rownum != rownumDeleted) {
+        jsonData[rownum].isActive = false;
+
+        table.clear().rows.add(jsonData).draw();
+
+        var row = table.row(rownum).node();
+        var itemCell = $(row).find('td:eq(2)'); 
+        var quantityCell = $(row).find('td:eq(3)');
+        var priceCell = $(row).find('td:eq(4)');
+
+        itemCell.html(jsonData[rownum].item_name);
+        quantityCell.html(jsonData[rownum].quantity);
+        priceCell.html(jsonData[rownum].price);
+    }else{
+        table.clear().rows.add(jsonData).draw(); 
+    }
+       table.page(pageInfo.page).draw('page');
+});
+
+
+$(document).on('click', '.delete', function(e) {
+    e.preventDefault(); 
+    debugger;
+    var rownum = $(this).closest('tr').find('td:eq(1)').attr('data-rownum'); 
+    
+    if (!rownum) {
+        var row = table.row($(this).closest('tr')); 
+        rownum = row.index(); 
+    }
+    
+    if (confirm('Are you sure you want to delete this row?')) {
+        table.row(rownum).remove().draw();
+        
+        jsonData.splice(rownum, 1); 
+
+        table.rows().every(function(rowIdx, tableLoop, rowLoop) {
+            var row = this.node();
+            $(row).find('td:first').html(rowIdx + 1);  
+            $(row).find('button').attr('rownum', rowIdx + 1)
+        });
+
+        calculateTotals()
+    }
+});
+
+
+$(document).on('click', '#save', function(e) {
+    e.preventDefault(); 
+
+    orderNo = $("#order_no").val();
+    comCustomerId = $("#com_customer_id").val();
+    orderDate = $("#order_date").val()
+    address = $("#address").val()
+
+     if (orderNo === "") {
+        alert("Order No is required!");
+        $("#order_no").focus();  
+        return;
+    }
+
+    if (comCustomerId === "") {
+        alert("Customer ID is required!");
+        $("#com_customer_id").focus();
+        return;
+    }
+
+    if (isNaN(comCustomerId)) {
+        alert("Customer ID must be a valid number!");
+        $("#com_customer_id").focus(); 
+        return;
+    }
+
+    if (orderDate === "") {
+        alert("Order Date is required!");
+        $("#order_date").focus();  
+        return;
+    }
+
+    if (address === "") {
+        alert("Address is required!");
+        $("#address").focus(); 
+        return;
+    }
+
+    var dateParts = orderDate.split("/"); 
+    var formattedOrderDate = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0];  
+   
+     var orderData = {
+        OrderId: @order.so_order_id,
+        OrderNo: orderNo,
+        OrderDate: formattedOrderDate,
+        ComCustomerId: comCustomerId,
+        Address: address,
+        Items: []
+    };
+    items = table.rows().data().toArray()
+    for (let index = 0; index < items.length; index++) {
+
+    var quantityValue = parseFloat(items[index].quantity);
+    var priceValue = parseFloat(items[index].price);
+
+    quantityValue = isNaN(quantityValue) ? 0 : quantityValue;
+    priceValue = isNaN(priceValue) ? 0 : priceValue;
+
+       if ( !(items[index].item_name === "" || quantityValue < 1 || priceValue < 1) )
+       {
+         orderData.Items.push(items[index]);
+       }
+    }
+
+    if (orderData.Items.length < 1) {
+        alert("Item is empty!");
+        return;
+    }
+
+    $.ajax({
+        url: '/SalesOrder/Edit',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(orderData),
+        success: function(response) {
+            if(response.httpStatus == 200){
+                alert('Order updated successfully!');
+                window.location.href = '/SalesOrder';
+            }
+        },
+        error: function(error) {
+            console.log('Error saving order', error);
+        }
+    });
+    
+});
+
+});
+
+function initPriceFormat() {
+     $('.price').priceFormat({
+            prefix: '',                 
+            thousandsSeparator: '.',    
+            centsSeparator: ',',      
+            centsLimit: 0             
+        });
+}
+
+function formatNumber(number) {
+    return new Intl.NumberFormat('de-DE').format(number); 
+}
+
+function calculateTotals() {
+    var totalquantity = 0;
+    var totalPrice = 0;
+    var data = table.rows().data();
+  
+    data.each(function(row) {
+        totalquantity += parseFloat(row.quantity) || 0;  
+        totalPrice += parseFloat(row.price) * parseFloat(row.quantity) || 0  ;  
+    });
+
+    $('.total-items:last').text(totalquantity);
+    $('.total-amount:last').text(formatNumber(totalPrice));
+}
+
+</script>

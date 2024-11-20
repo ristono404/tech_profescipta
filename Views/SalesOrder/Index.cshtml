@@ -1,0 +1,170 @@
+﻿<div class="container">
+
+<div class="bordered-box">
+        <div class="form-group row justify-content-center mb-3">
+            <!-- Keywords Input -->
+            <label for="keywords" class="col-md-2 col-form-label custom-label text-md-right">Keywords</label>
+            <div class="col-md-3">
+                <input type="text" class="form-control custom-input" id="keywords" placeholder="Input Here">
+            </div>
+
+            <!-- Order Date Input -->
+            <label for="orderDate" class="col-md-2 col-form-label custom-label text-md-right">Order Date</label>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <input class="form-control custom-input" id="order-date" placeholder="Pick Date">
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-10 d-flex justify-content-end">
+                <!-- Search Button -->
+                <button id="btn-search" class="btn btn-search">Search</button>
+            </div>
+        </div>
+    </div>
+    <br />
+
+<div class="d-flex justify-content-between">
+        <!-- Grouped buttons on the left -->
+        <div>
+            
+            @Html.ActionLink("Add New Data", "Add", "SalesOrder", null, new { @class = "btn btn-danger" })
+          
+            <button id="btn-export-excel" class="btn btn-primary">
+                 <i class="fa fa-file-excel"></i> Export to Excel
+            </button>
+
+        </div>
+    
+    </div>
+
+    <br/>
+    <div style="margin:0 auto;">
+        <table id="example" class="table table-striped table-bordered dt-responsive nowrap" width="100%" cellspacing="0">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Action</th>
+                    <th>Sales Order</th>
+                    <th>Order Date</th>
+                    <th>Customer</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+<script>
+     var table
+$(document).ready(function() {
+      $('#order-date').datepicker({
+            format: 'dd/mm/yyyy',
+            autoclose: true,     
+            todayHighlight: true 
+        });
+    localStorage.clear();
+    table = $("#example").DataTable({
+        "dom": "<'row'<'col-sm-12'tr>>" +
+               "<'row'<'col-sm-7'p><'col-sm-5'i>>", 
+        "language": {
+            "info": "_START_ - _END_ of _TOTAL_ items",
+            "paginate": {
+                "first": '<i class="fa fa-angle-double-left"></i>',
+                "previous": '<i class="fa fa-angle-left"></i>',
+                "next": '<i class="fa fa-angle-right"></i>',
+                "last": '<i class="fa fa-angle-double-right"></i>'
+            }
+        },
+        "createdRow": function(row, data, dataIndex) {
+            var pageInfo = table.page.info();
+            $('td:eq(0)', row).html(pageInfo.start + dataIndex + 1); 
+        },
+        "pagingType": "full_numbers",  
+        "searching": false,
+        "lengthChange": false,  
+        "pageLength": 4,  // Menentukan jumlah entri per halaman
+        "ordering": false, 
+        "processing": true,  // Tampilkan progress loading
+        "serverSide": true,  // Aktifkan server-side processing
+        "ajax": {
+            "url": "/SalesOrder/LoadData",  // Endpoint untuk memuat data
+            "type": "POST",
+            "datatype": "json",
+            "data": function(d) {
+                // Menambahkan parameter pencarian saat mengirimkan request AJAX
+                d.keywords = $('#keywords').val();  // Ambil nilai dari input pencarian
+                d.order_date = $('#order-date').val(); 
+                if(d.order_date){
+                    var dateParts = d.order_date.split("/");  // Split the date by "/"
+                    d.order_date = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0];
+                }
+               
+                localStorage.setItem('keywords', d.keywords);
+                localStorage.setItem('order_date', d.order_date);
+            }
+        },
+        "columns": [
+             {
+                "data": null,
+                "render": function(data, type, row, meta) {
+                    return meta.row + 1 + meta.settings._iDisplayStart;
+                },
+                "orderable": false,  // Disable sorting on row number column
+                "searchable": false  // Disable searching on row number column
+            },
+            {
+                "render": function(data, type, full, meta) {
+                    return `<a href="SalesOrder/Edit?orderNo=${full.order_no}" class='btn btn-primary btn-sm'><i class='fas fa-edit'></i></a> <button class='btn btn-danger btn-sm' onclick='DeleteData("${full.order_no}")' ><i class='fas fa-trash'></i></button>`;
+                }
+            },
+            { "data": "order_no", "name": "order_no", "autoWidth": true },
+            { "data": "order_date", "name": "order_date", "autoWidth": true },
+            { "data": "customer", "name": "customer", "autoWidth": true },
+        ]
+    });
+
+    // Ketika tombol pencarian diklik
+    $('#btn-search').click(function(e) {
+        e.preventDefault();  // Mencegah form submit default
+        table.ajax.reload();  // Memuat ulang DataTable dengan parameter pencarian baru
+    });
+
+     $('#btn-export-excel').click(function (e) {
+        e.preventDefault(); // Prevent default form submission
+
+       var keywords = localStorage.getItem('keywords');  // Default to "" if null or undefined
+        var orderDate = localStorage.getItem('order_date');  // Default to "" if null or undefined
+
+        // Send the data via GET request to the ExportToExcel action
+        var url = '/SalesOrder/ExportToExcel';
+        var queryString = `?keywords=${keywords}&orderDate=${orderDate}`;
+
+        // Create a link element to trigger the download
+        var downloadLink = document.createElement('a');
+        downloadLink.href = url + queryString;
+        downloadLink.download = 'SalesOrders.xlsx';  // Set the file name
+        downloadLink.click();  // Trigger the download
+    });
+
+});
+
+
+    function DeleteData(orderNo) {
+        if (confirm("Are you sure you want to delete ...?")) {
+            Delete(orderNo);
+        } else {
+            return false;
+        }
+    }
+    function Delete(orderNo) {
+        var url = '@Url.Content("~/")' + "SalesOrder/Delete";
+        $.get(url, { orderNo: orderNo }, function(data) {
+            if (data) {
+                table.ajax.reload();
+            } else {
+                alert("Something Went Wrong!");
+            }
+        });
+    }
+</script>
