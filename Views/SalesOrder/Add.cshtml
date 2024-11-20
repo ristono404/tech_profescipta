@@ -43,7 +43,6 @@
 
          <div class="form-group row justify-content-center mb-3">
 
-
             <!-- Order Date Input -->
             <label for="orderDate" class="col-md-2 col-form-label custom-label text-md-right">
                 Order Date
@@ -54,18 +53,14 @@
                     <input type="input" class="form-control" readonly id="order_date" placeholder="Select a date">
                 </div>
             </div>
-
             <!-- Keywords Input -->
             <label for="keywords" class="col-md-2 col-form-label custom-label text-md-right">
                 Address
-                <span class="text-danger">*</span>
             </label>
             <div class="col-md-3">
                 <textarea class="form-control custom-input" id="address"></textarea>
             </div>
-
         </div>
-
     <br />
 
 </div>
@@ -487,12 +482,6 @@ $(document).on('click', '#save', function(e) {
         return;
     }
 
-    if (address === "") {
-        alert("Address is required!");
-        $("#address").focus();  
-        return;
-    }
-
     var dateParts = orderDate.split("/");  
     var formattedOrderDate = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0];  
 
@@ -532,6 +521,8 @@ $(document).on('click', '#save', function(e) {
             if(response.httpStatus == 200){
                 alert('Order saved successfully!');
                 window.location.href = '/SalesOrder';
+            }else{
+                alert(response.message);
             }
         },
         error: function(error) {

@@ -67,7 +67,6 @@
             <!-- Keywords Input -->
             <label for="keywords" class="col-md-2 col-form-label custom-label text-md-right">
                 Address
-                <span class="text-danger">*</span>
             </label>
             <div class="col-md-3">
                 <textarea class="form-control custom-input" id="address">@order.address</textarea>
@@ -135,7 +134,6 @@
 var table
 var lastRowNum
 $(document).ready(function() {
-
 
 $('.price').priceFormat();
 
@@ -515,12 +513,6 @@ $(document).on('click', '#save', function(e) {
         return;
     }
 
-    if (address === "") {
-        alert("Address is required!");
-        $("#address").focus(); 
-        return;
-    }
-
     var dateParts = orderDate.split("/"); 
     var formattedOrderDate = dateParts[2] + "-" + dateParts[1] + "-" + dateParts[0];  
    
@@ -561,6 +553,8 @@ $(document).on('click', '#save', function(e) {
             if(response.httpStatus == 200){
                 alert('Order updated successfully!');
                 window.location.href = '/SalesOrder';
+            }else{
+                alert(response.message);
             }
         },
         error: function(error) {

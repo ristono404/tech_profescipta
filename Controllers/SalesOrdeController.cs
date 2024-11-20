@@ -51,13 +51,7 @@ public IActionResult LoadData()
         int skip = start != null ? Convert.ToInt32(start) : 0;
         int recordsTotal = 0;
        var result = _unitOfWork.Order.GetAllQueryable();
-        // Sorting
-        // if (!(string.IsNullOrEmpty(sortColumn) && string.IsNullOrEmpty(sortColumnDirection)))
-        // {
-        //      result = result.OrderBy($"{sortColumn} {sortColumnDirection}");
-        // }
 
- // Search
         if (!string.IsNullOrEmpty(keywords) && !string.IsNullOrEmpty(orderDate) )
         {
             DateTime parsedOrderDate;
@@ -81,6 +75,7 @@ public IActionResult LoadData()
         // Paging
         var data = result .Select(order => new GridSalesOrderViewModel
         {
+            so_order_id = order.so_order_id,
             order_no = order.order_no,
             order_date = order.order_date.ToString("dd/MM/yyyy"),
             customer = order.Customer.customer_name 
@@ -109,6 +104,14 @@ public JsonResult Add([FromBody] CreateOrderViewModel data)
     if (data == null)
     {
         return Json(new { success = false, message = "Data is null" });
+    }
+
+   var totalData = _unitOfWork.Order.GetAllQueryable().Where(x => x.order_no == data.OrderNo).Count();
+   if (totalData > 0)
+    {
+        result.httpStatus = 500;
+        result.Message = "The order number is already in use. Please choose a different one.";
+        return Json(result);
     }
 
         // Create Order entity
@@ -147,7 +150,7 @@ public JsonResult Add([FromBody] CreateOrderViewModel data)
     return Json(result);  // For now, return the received data
 }
 
-public IActionResult Edit(string orderNo)
+public IActionResult Edit(int orderId)
 {
     ViewData["Title"] = "EDIT - SALES ORDER";
     
@@ -157,7 +160,7 @@ public IActionResult Edit(string orderNo)
             order_date = x.order_date.ToString("dd/MM/yyyy"),
             com_customer_id = x.com_customer_id ,
             address = x.address
-    }).Where(x => x.order_no == orderNo).FirstOrDefault();
+    }).Where(x => x.so_order_id == orderId).FirstOrDefault();
     if (order == null)
     {
         return RedirectToAction("Index");
@@ -183,6 +186,16 @@ public IActionResult Edit(string orderNo)
 public JsonResult Edit([FromBody] CreateOrderViewModel data)
 {
     ResultModel result = new ResultModel();
+
+
+   var totalData = _unitOfWork.Order.GetAllQueryable().Where(x => x.order_no == data.OrderNo && x.so_order_id != data.OrderId).Count();
+   if (totalData > 0)
+    {
+        result.httpStatus = 500;
+        result.Message = "The order number is already in use. Please choose a different one.";
+        return Json(result);
+    }
+
     var order = _unitOfWork.Order.GetAllQueryable().Include("Items").Where(x => x.so_order_id == data.OrderId).FirstOrDefault();
     if (order == null)
     {

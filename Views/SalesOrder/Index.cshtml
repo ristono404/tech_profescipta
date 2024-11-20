@@ -115,7 +115,7 @@ $(document).ready(function() {
             },
             {
                 "render": function(data, type, full, meta) {
-                    return `<a href="SalesOrder/Edit?orderNo=${full.order_no}" class='btn btn-primary btn-sm'><i class='fas fa-edit'></i></a> <button class='btn btn-danger btn-sm' onclick='DeleteData("${full.order_no}")' ><i class='fas fa-trash'></i></button>`;
+                    return `<a href="SalesOrder/Edit?orderId=${full.so_order_id}" class='btn btn-primary btn-sm'><i class='fas fa-edit'></i></a> <button class='btn btn-danger btn-sm' onclick='DeleteData("${full.order_no}")' ><i class='fas fa-trash'></i></button>`;
                 }
             },
             { "data": "order_no", "name": "order_no", "autoWidth": true },

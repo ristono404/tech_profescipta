@@ -4,6 +4,7 @@ namespace profescipta.Models;
 
 public class GridSalesOrderViewModel
 {
+    public long so_order_id { get; set; }
     public string order_no { get; set; }
     public string order_date { get; set; }
     public string customer { get; set; }
